@@ -15,7 +15,7 @@ except LookupError:
 def extract_insights(conversation_data, flagged_messages, analyzed_conversation):
     """
     Extract key insights from the conversation analysis to provide 
-    a summarized view of the detected risks focused on executive needs.
+    a summarized view of the detected risks.
     
     Args:
         conversation_data: DataFrame containing all messages
@@ -23,7 +23,7 @@ def extract_insights(conversation_data, flagged_messages, analyzed_conversation)
         analyzed_conversation: Dictionary with analysis results
         
     Returns:
-        Formatted HTML string with executive-focused insights
+        Formatted string with insights
     """
     # Convert flagged_messages to DataFrame if needed
     if flagged_messages and not isinstance(flagged_messages, pd.DataFrame):
@@ -33,89 +33,28 @@ def extract_insights(conversation_data, flagged_messages, analyzed_conversation)
     
     insights = []
     
-    # Calculate key metrics
+    # Overview statistics
+    insights.append("## Overview")
+    
     total_messages = len(conversation_data)
     total_flagged = len(flagged_df) if not flagged_df.empty else 0
     flag_percentage = (total_flagged / total_messages * 100) if total_messages > 0 else 0
     
-    # Risk severity assessment
-    severity = assess_risk_severity(flagged_df if not flagged_df.empty else None, conversation_data)
-    severity_color = "#d13438" if severity['overall'] == "High" else "#ff8c00" if severity['overall'] == "Medium" else "#107c10"
+    insights.append(f"- **Total messages analyzed:** {total_messages}")
+    insights.append(f"- **Messages flagged as potential risks:** {total_flagged} ({flag_percentage:.1f}%)")
     
-    # Executive Summary Card
-    insights.append(f"""
-    <div style="background-color: {severity_color}10; padding: 1.5rem; border-left: 5px solid {severity_color}; border-radius: 5px; margin-bottom: 2rem;">
-        <h3 style="margin-top: 0; color: {severity_color};">{severity['overall']} Risk Severity</h3>
-        <p>The analysis identified {total_flagged} messages ({flag_percentage:.1f}%) containing potential risk indicators 
-        that may require leadership attention.</p>
-        
-        <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
-            <div style="flex: 1; min-width: 200px; background-color: white; padding: 1rem; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h4 style="margin-top: 0; color: {severity_color};">Dismissal Factor</h4>
-                <div style="font-size: 1.5rem; font-weight: bold;">{severity['dismissal_factor']}/10</div>
-                <p style="margin-bottom: 0; font-size: 0.9rem; color: #666;">Measures how often concerns were downplayed</p>
-            </div>
-            
-            <div style="flex: 1; min-width: 200px; background-color: white; padding: 1rem; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h4 style="margin-top: 0; color: {severity_color};">Persistence Factor</h4>
-                <div style="font-size: 1.5rem; font-weight: bold;">{severity['persistence_factor']}/10</div>
-                <p style="margin-bottom: 0; font-size: 0.9rem; color: #666;">How persistently concerns were raised</p>
-            </div>
-            
-            <div style="flex: 1; min-width: 200px; background-color: white; padding: 1rem; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h4 style="margin-top: 0; color: {severity_color};">Impact Potential</h4>
-                <div style="font-size: 1.5rem; font-weight: bold;">{severity['impact_potential']}/10</div>
-                <p style="margin-bottom: 0; font-size: 0.9rem; color: #666;">Potential business impact if issues materialize</p>
-            </div>
-        </div>
-    </div>
-    """)
-    
-    # Business Impact Assessment - what executives care about most
-    insights.append("""
-    <div style="margin-bottom: 2rem;">
-        <h3 style="color: #0078d4; margin-bottom: 1rem;">Business Impact Assessment</h3>
-    """)
-    
-    # Identify key risk themes for business impact
+    # Identify key risk themes
     if not flagged_df.empty and 'message' in flagged_df.columns:
+        insights.append("\n## Key Risk Themes")
         risk_themes = identify_risk_themes(flagged_df['message'].tolist())
         
-        if risk_themes:
-            primary_theme = risk_themes[0][0] if risk_themes else "Unknown"
-            primary_count = risk_themes[0][1] if risk_themes else 0
-            
-            # Business impact narrative based on the most common theme
-            impact_narratives = {
-                "Thermal Issues": "Potential thermal issues may impact hardware reliability and could lead to system failures if not addressed.",
-                "Sensor Problems": "Sensor malfunctions could result in unreliable data collection, potentially affecting decision quality.",
-                "Anomalies": "Detected anomalies suggest irregular system behavior that may compromise operational stability.",
-                "System Concerns": "System concerns indicate potential infrastructure weaknesses that could affect service delivery."
-            }
-            
-            impact_narrative = impact_narratives.get(primary_theme, "The identified issues require further technical investigation to assess potential business impact.")
-            
-            insights.append(f"""
-            <div style="display: flex; margin-bottom: 1.5rem;">
-                <div style="flex: 2; margin-right: 1rem;">
-                    <h4 style="margin-top: 0;">Primary Risk Area: {primary_theme}</h4>
-                    <p>{impact_narrative}</p>
-                </div>
-                <div style="flex: 1; background-color: #f8f9fa; padding: 1rem; border-radius: 5px;">
-                    <h4 style="margin-top: 0;">Risk Distribution</h4>
-                    <ul style="margin-bottom: 0;">
-            """)
-            
-            for theme, count in risk_themes:
-                insights.append(f"<li><strong>{theme}</strong>: {count} mentions</li>")
-                
-            insights.append("""
-                    </ul>
-                </div>
-            </div>
-            """)
+        for theme, count in risk_themes:
+            insights.append(f"- **{theme}**: Mentioned in {count} flagged messages")
     
-    # Key People Analysis - focus on decision makers
+    # Communication pattern insights
+    insights.append("\n## Communication Pattern Insights")
+    
+    # Analyze who raised concerns vs who dismissed them
     if not flagged_df.empty and 'sender' in flagged_df.columns and 'reason' in flagged_df.columns:
         concern_raisers = flagged_df[
             flagged_df['reason'].str.contains('concern|raised', case=False)
@@ -125,47 +64,50 @@ def extract_insights(conversation_data, flagged_messages, analyzed_conversation)
             flagged_df['reason'].str.contains('dismiss|downplay', case=False)
         ]['sender'].value_counts()
         
-        if not concern_raisers.empty or not dismissers.empty:
-            insights.append("""
-            <h4 style="margin-bottom: 1rem;">Key Team Members Involved</h4>
-            <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
-            """)
+        if not concern_raisers.empty:
+            insights.append("### Who Raised Concerns:")
+            for sender, count in concern_raisers.items():
+                insights.append(f"- **{sender}**: {count} messages")
+        
+        if not dismissers.empty:
+            insights.append("\n### Who Dismissed Concerns:")
+            for sender, count in dismissers.items():
+                insights.append(f"- **{sender}**: {count} messages")
+    
+    # Timeline of risk escalation
+    if not flagged_df.empty and 'timestamp' in flagged_df.columns:
+        insights.append("\n## Timeline of Risk Evolution")
+        
+        # Sort flagged messages by timestamp
+        sorted_flags = flagged_df.sort_values('timestamp')
+        
+        # Group by approximate time (minutes)
+        sorted_flags['time_group'] = sorted_flags['timestamp'].dt.floor('5min')
+        
+        # Get a representative message for each time group
+        for time_group, group in sorted_flags.groupby('time_group'):
+            time_str = time_group.strftime('%H:%M')
+            insights.append(f"- **{time_str}**: {len(group)} flagged messages")
             
-            if not concern_raisers.empty:
-                insights.append("""
-                <div style="flex: 1; min-width: 300px; background-color: #fef9f9; padding: 1rem; border-left: 3px solid #d13438; border-radius: 5px;">
-                    <h5 style="margin-top: 0; color: #d13438;">Raising Technical Concerns</h5>
-                    <ul style="margin-bottom: 0;">
-                """)
-                for sender, count in concern_raisers.items():
-                    insights.append(f"<li><strong>{sender}</strong>: {count} flagged messages</li>")
-                insights.append("</ul></div>")
-            
-            if not dismissers.empty:
-                insights.append("""
-                <div style="flex: 1; min-width: 300px; background-color: #fff9f0; padding: 1rem; border-left: 3px solid #ff8c00; border-radius: 5px;">
-                    <h5 style="margin-top: 0; color: #ff8c00;">Potentially Downplaying Risks</h5>
-                    <ul style="margin-bottom: 0;">
-                """)
-                for sender, count in dismissers.items():
-                    insights.append(f"<li><strong>{sender}</strong>: {count} flagged messages</li>")
-                insights.append("</ul></div>")
-                
-            insights.append("</div>")
+            # Show the first message from this time group
+            if len(group) > 0:
+                first_msg = group.iloc[0]
+                insights.append(f"  - {first_msg['sender']}: \"{first_msg['message']}\"")
+                insights.append(f"  - *Reason flagged*: {first_msg['reason']}")
     
-    insights.append("</div>")  # Close business impact section
+    # Risk severity assessment
+    severity = assess_risk_severity(flagged_df if not flagged_df.empty else None, conversation_data)
+    insights.append("\n## Risk Severity Assessment")
+    insights.append(f"- **Overall severity:** {severity['overall']}")
+    insights.append(f"- **Dismissal factor:** {severity['dismissal_factor']}/10")
+    insights.append(f"- **Persistence factor:** {severity['persistence_factor']}/10")
+    insights.append(f"- **Impact potential:** {severity['impact_potential']}/10")
     
-    # Executive Recommendations
-    insights.append("""
-    <div style="background-color: #f0f8ff; padding: 1.5rem; border-radius: 5px; margin-bottom: 2rem;">
-        <h3 style="margin-top: 0; color: #0078d4;">Leadership Action Items</h3>
-    """)
-    
+    # Recommendations
+    insights.append("\n## Recommendations")
     recommendations = generate_recommendations(flagged_df if not flagged_df.empty else None, severity)
-    insights.append("<ol style='margin-bottom: 0;'>")
     for rec in recommendations:
-        insights.append(f"<li>{rec}</li>")
-    insights.append("</ol></div>")
+        insights.append(f"- {rec}")
     
     return "\n".join(insights)
 
@@ -292,43 +234,42 @@ def assess_risk_severity(flagged_df, conversation_data):
 
 def generate_recommendations(flagged_df, severity):
     """
-    Generate executive-focused recommendations based on the analysis.
+    Generate recommendations based on the analysis.
     
     Args:
         flagged_df: DataFrame with flagged messages
         severity: Dictionary with severity assessment
         
     Returns:
-        List of recommendation strings formatted for executive audience
+        List of recommendation strings
     """
     recommendations = []
     
-    # Severity-specific action items with business impact focus
+    # Basic recommendations that always apply
+    recommendations.append("Review all flagged messages and investigate potential issues")
+    recommendations.append("Ensure engineering concerns are properly acknowledged and evaluated")
+    
+    # Add severity-specific recommendations
     if severity['overall'] == "High":
-        recommendations.append("<strong>Immediate action required:</strong> Schedule an engineering review within 24 hours to assess potential risks to project/product delivery timelines.")
-        recommendations.append("<strong>Establish a technical task force</strong> led by engineers who raised concerns to investigate and report findings directly to leadership.")
-        recommendations.append("<strong>Implement immediate safeguards</strong> against the identified technical risks to mitigate potential business impact.")
+        recommendations.append("**URGENT**: Immediate follow-up required on all flagged issues")
+        recommendations.append("Consider implementing a more structured risk reporting process")
+        recommendations.append("Review decision-making hierarchy to ensure technical concerns aren't overlooked")
         
     elif severity['overall'] == "Medium":
-        recommendations.append("<strong>Prioritize technical review:</strong> Schedule a focused discussion with engineering team within 72 hours to evaluate identified concerns.")
-        recommendations.append("<strong>Create a structured risk tracking system</strong> to ensure technical concerns receive appropriate visibility and follow-up.")
-        recommendations.append("<strong>Conduct a communication review</strong> to ensure engineering feedback is properly escalated through appropriate channels.")
+        recommendations.append("Schedule a follow-up discussion on the flagged issues within 24-48 hours")
+        recommendations.append("Document all potential concerns and track resolution")
         
     else:  # Low
-        recommendations.append("<strong>Monitor situation:</strong> Ensure regular check-ins on these identified areas in upcoming project status meetings.")
-        recommendations.append("<strong>Document concerns raised</strong> in the project risk register for continued visibility.")
+        recommendations.append("Monitor the situation for any changes or escalations")
     
-    # Add recommendations based on specific factors - tailored for business context
+    # Add recommendations based on specific factors
     if severity['dismissal_factor'] >= 6:
-        recommendations.append("<strong>Review decision-making processes:</strong> Evaluate how technical input is incorporated into leadership decisions to strengthen engineering-management alignment.")
+        recommendations.append("Address potential communication issues between leadership and engineering teams")
     
     if severity['persistence_factor'] >= 6:
-        recommendations.append("<strong>Technical deep dive required:</strong> When engineers repeatedly raise the same concerns, schedule dedicated technical reviews to fully understand potential impacts.")
+        recommendations.append("Take note of recurring concerns that may indicate a persistent problem")
     
     if severity['impact_potential'] >= 6:
-        recommendations.append("<strong>Impact assessment needed:</strong> Evaluate potential business consequences if these technical issues were to materialize, including customer impact, revenue implications, and reputational risks.")
-    
-    # Add a general leadership recommendation that always applies
-    recommendations.append("<strong>Leadership communication strategy:</strong> Ensure engineers feel heard and valued when raising technical concerns to strengthen team culture and improve early risk detection.")
+        recommendations.append("Evaluate potential impact if the identified issues were to manifest")
     
     return recommendations

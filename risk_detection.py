@@ -164,8 +164,7 @@ def identify_dismissed_concerns(df, risk_clusters):
         
         for idx, row in cluster_messages.iterrows():
             # Check if this is a concern being raised (by non-leadership)
-            if row['contains_risk_word'] and not row['is_leadership']:
-                # Made the sentiment check less strict to catch more subtle concerns
+            if row['contains_risk_word'] and not row['is_leadership'] and row['compound_sentiment'] < 0:
                 concerns_raised = True
                 
                 # Add this message to the flagged list
@@ -178,7 +177,7 @@ def identify_dismissed_concerns(df, risk_clusters):
                 })
             
             # Check if a leader is dismissing concerns
-            elif row['is_leadership'] and (row['is_dismissive'] or (row['compound_sentiment'] > 0 and any(keyword.lower() in row['message'].lower() for keyword in RISK_KEYWORDS))):
+            elif row['is_leadership'] and (row['is_dismissive'] or (row['compound_sentiment'] > 0.2 and any(keyword.lower() in row['message'].lower() for keyword in RISK_KEYWORDS))):
                 concerns_dismissed = True
                 
                 # Add this message to the flagged list
@@ -195,14 +194,12 @@ def identify_dismissed_concerns(df, risk_clusters):
             # Look for messages where engineers express further concerns or uncertainty
             for idx, row in cluster_messages.iterrows():
                 if not row['is_leadership'] and not any(msg['timestamp'] == row['timestamp'] for msg in flagged_messages):
-                    # More lenient detection of expressions of doubt, frustration, or persistence
+                    # Look for expressions of doubt, frustration, or persistence
                     if ('still' in row['message'].lower() or 
                         'not convinced' in row['message'].lower() or 
                         'hope' in row['message'].lower() or 
-                        'guess' in row['message'].lower() or
-                        'documenting' in row['message'].lower() or
-                        'fingers crossed' in row['message'].lower() or
-                        '...' in row['message']):
+                        '...' in row['message'] or 
+                        row['compound_sentiment'] < -0.2):
                         
                         flagged_messages.append({
                             'timestamp': row['timestamp'],
