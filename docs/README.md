@@ -8,6 +8,7 @@ Welcome to the Risk Detection System documentation. This system analyzes Slack c
 - [Sentiment Analysis](sentiment_analysis.md) - How the system analyzes message sentiment to detect risks
 - [System Overview](system_overview.md) - General system architecture and workflow
 - [Risk Detection Algorithms](risk_detection.md) - Details of the risk detection algorithms and keywords
+- [Data Processing Flow](data_processing_flow.md) - Comprehensive documentation of the CSV upload and processing workflow
 
 ## Getting Started
 
@@ -24,3 +25,13 @@ The CSV file must contain the following columns:
 - `sender`: Who sent the message
 - `channel`: Which channel the message was sent in
 - `message`: The content of the message
+
+## User Interface
+
+The system presents results in three organized tabs:
+
+1. **Escalation Report**: A detailed report of all flagged messages with context
+2. **Visualizations**: Interactive charts showing risk patterns and communication flow
+3. **Insights**: Key findings, risk severity assessment, and actionable recommendations
+
+For a complete understanding of how your data is processed when uploaded, see the [Data Processing Flow](data_processing_flow.md) documentation.
