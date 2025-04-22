@@ -8,6 +8,7 @@ Welcome to the Risk Detection System documentation. This system analyzes Slack c
 - [Sentiment Analysis](sentiment_analysis.md) - How the system analyzes message sentiment to detect risks
 - [System Overview](system_overview.md) - General system architecture and workflow
 - [Risk Detection Algorithms](risk_detection.md) - Details of the risk detection algorithms and keywords
+- [Data Processing Flow](data_processing_flow.md) - Comprehensive explanation of what happens when you upload a CSV file
 
 ## Getting Started
 
