@@ -7,7 +7,8 @@ from datetime import timedelta
 
 def generate_visualizations(conversation_data, flagged_messages, analyzed_conversation):
     """
-    Generate visualizations for the risk detection results.
+    Generate visualizations for the risk detection results, focused on providing 
+    clear business value for engineering leadership (CTO, CEO).
     
     Args:
         conversation_data: DataFrame containing all conversation messages
@@ -21,7 +22,10 @@ def generate_visualizations(conversation_data, flagged_messages, analyzed_conver
     else:
         flagged_df = pd.DataFrame(columns=['timestamp', 'sender', 'channel', 'message', 'reason'])
     
-    # Create two columns for the visualizations
+    # Critical executive visualizations focused on business value
+    st.subheader("🚨 Critical Risk Indicators")
+    
+    # Create two columns for the key visualizations
     col1, col2 = st.columns(2)
     
     with col1:
@@ -31,19 +35,10 @@ def generate_visualizations(conversation_data, flagged_messages, analyzed_conver
     with col2:
         # Sender distribution showing who is raising concerns vs dismissing them
         create_sender_distribution(conversation_data, flagged_df)
-    
-    # Message sentiment flow
-    st.subheader("Message Sentiment Flow")
-    create_sentiment_flow(conversation_data)
-    
-    # Channel distribution of flagged messages
+        
+    # Add a severity score metric if we have flagged messages
     if not flagged_df.empty:
-        st.subheader("Distribution of Flagged Messages by Channel")
-        create_channel_distribution(flagged_df)
-    
-    # Risk word occurrence heatmap
-    st.subheader("Risk Keyword Occurrence")
-    create_risk_keyword_heatmap(conversation_data)
+        create_executive_summary(flagged_df, conversation_data)
 
 def create_timeline_visualization(all_messages, flagged_messages):
     """
@@ -159,155 +154,126 @@ def create_sender_distribution(all_messages, flagged_messages):
     
     st.plotly_chart(fig, use_container_width=True)
 
-def create_sentiment_flow(conversation_data):
+def create_executive_summary(flagged_df, conversation_data):
     """
-    Create a visualization of message sentiment flow over time.
-    
-    Args:
-        conversation_data: DataFrame containing all conversation messages
-    """
-    from nltk.sentiment import SentimentIntensityAnalyzer
-    
-    # Initialize sentiment analyzer
-    sia = SentimentIntensityAnalyzer()
-    
-    # Add sentiment scores to the conversation data
-    sentiment_df = conversation_data.copy()
-    sentiment_df['sentiment'] = sentiment_df['message'].apply(
-        lambda x: sia.polarity_scores(x)['compound']
-    )
-    
-    # Create a line chart showing sentiment flow over time
-    fig = px.line(
-        sentiment_df,
-        x='timestamp',
-        y='sentiment',
-        color='sender',
-        hover_data=['message'],
-        markers=True
-    )
-    
-    # Add a horizontal line at sentiment = 0
-    fig.add_shape(
-        type="line",
-        x0=sentiment_df['timestamp'].min(),
-        y0=0,
-        x1=sentiment_df['timestamp'].max(),
-        y1=0,
-        line=dict(color="gray", width=1, dash="dash")
-    )
-    
-    fig.update_layout(
-        title="Message Sentiment Flow",
-        xaxis_title="Time",
-        yaxis_title="Sentiment Score",
-        height=400,
-        yaxis=dict(
-            tickvals=[-1, -0.5, 0, 0.5, 1],
-            ticktext=["Very Negative", "Negative", "Neutral", "Positive", "Very Positive"]
-        )
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-
-def create_channel_distribution(flagged_df):
-    """
-    Create a visualization showing the distribution of flagged messages by channel.
+    Create an executive summary visualization focused on high-level risk metrics
+    that would be valuable to a CTO or CEO.
     
     Args:
         flagged_df: DataFrame containing flagged messages
-    """
-    channel_counts = flagged_df['channel'].value_counts().reset_index()
-    channel_counts.columns = ['channel', 'count']
-    
-    fig = px.pie(
-        channel_counts,
-        values='count',
-        names='channel',
-        title="Flagged Messages by Channel",
-        color_discrete_sequence=px.colors.qualitative.Set3
-    )
-    
-    fig.update_traces(textposition='inside', textinfo='percent+label')
-    
-    fig.update_layout(
-        height=400
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-
-def create_risk_keyword_heatmap(conversation_data):
-    """
-    Create a heatmap showing the occurrence of risk keywords over time.
-    
-    Args:
         conversation_data: DataFrame containing all conversation messages
     """
-    # Define risk keywords categories for clarity
-    risk_keywords = {
-        'Technical Issues': ['spike', 'anomaly', 'thermal deviation', 'drift', 'failure', 'bug', 'error', 'sensor'],
-        'Uncertainty': ['weird', 'unusual', 'unexpected', 'inconsistent', 'irregular', 'not sure', 'uncertain'],
-        'Concerns': ['concern', 'issue', 'problem', 'not convinced', 'flag', 'warning', 'blockers']
-    }
+    st.subheader("Executive Risk Summary")
     
-    # Create a time-binned version of the conversation
-    # Use 5-minute bins for the time axis
-    time_min = conversation_data['timestamp'].min()
-    time_max = conversation_data['timestamp'].max()
+    # Create 3 columns for key metrics
+    col1, col2, col3 = st.columns(3)
     
-    # Create time bins
-    time_bins = pd.date_range(start=time_min, end=time_max, freq='5min')
+    # Calculate key metrics
+    total_messages = len(conversation_data)
+    total_flagged = len(flagged_df)
+    flag_percentage = (total_flagged / total_messages * 100) if total_messages > 0 else 0
     
-    # Initialize the heatmap data
-    heatmap_data = []
+    # Calculate time span of conversation
+    time_span = (conversation_data['timestamp'].max() - conversation_data['timestamp'].min()).total_seconds() / 60
+    time_span = max(1, round(time_span))  # In minutes, minimum 1
     
-    for category, keywords in risk_keywords.items():
-        for time_idx in range(len(time_bins) - 1):
-            bin_start = time_bins[time_idx]
-            bin_end = time_bins[time_idx + 1]
-            
-            # Messages in this time bin
-            bin_messages = conversation_data[
-                (conversation_data['timestamp'] >= bin_start) & 
-                (conversation_data['timestamp'] < bin_end)
-            ]
-            
-            # Count messages containing keywords in this category
-            count = sum(1 for msg in bin_messages['message'] if any(keyword.lower() in msg.lower() for keyword in keywords))
-            
-            if len(bin_messages) > 0:
-                normalized_count = count / len(bin_messages)
-            else:
-                normalized_count = 0
-            
-            heatmap_data.append({
-                'time_bin': bin_start,
-                'category': category,
-                'count': normalized_count
-            })
+    # Calculate dismissal ratio - number of messages with dismissal language
+    from nltk.sentiment import SentimentIntensityAnalyzer
+    sia = SentimentIntensityAnalyzer()
     
-    # Convert to DataFrame
-    heatmap_df = pd.DataFrame(heatmap_data)
+    # Get sentiment for leadership responses to concerns
+    leadership_roles = ['PM_Lead', 'Director', 'QA_Tech', 'Systems_Admin']
+    leadership_messages = conversation_data[conversation_data['sender'].isin(leadership_roles)]
     
-    if not heatmap_df.empty:
-        # Pivot the DataFrame for the heatmap
-        pivot_df = heatmap_df.pivot(index='category', columns='time_bin', values='count')
-        
-        # Create the heatmap
-        fig = px.imshow(
-            pivot_df.values,
-            labels=dict(x="Time", y="Risk Category", color="Frequency"),
-            x=[pd.to_datetime(str(col)).strftime('%H:%M') for col in pivot_df.columns],
-            y=pivot_df.index,
-            color_continuous_scale='Reds',
-            aspect="auto"
-        )
-        
-        fig.update_layout(
-            title="Risk Keyword Frequency Over Time",
-            height=300
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+    if not leadership_messages.empty:
+        leadership_sentiments = leadership_messages['message'].apply(
+            lambda x: sia.polarity_scores(x)['compound']
+        ).tolist()
+        avg_leadership_sentiment = np.mean(leadership_sentiments)
+        dismissal_indicator = min(10, max(1, round((avg_leadership_sentiment + 1) * 5)))
     else:
-        st.info("Not enough data to generate a heatmap of risk keywords.")
+        dismissal_indicator = 5  # Neutral if no leadership messages
+    
+    # Create risk severity score (1-10)
+    if total_flagged == 0:
+        risk_severity = 1
+    else:
+        # Calculate severity based on flagged percentage and dismissal indicator
+        risk_severity = min(10, max(1, round((flag_percentage / 10) + dismissal_indicator)))
+    
+    # Display metrics with appropriate color coding
+    with col1:
+        st.metric("Risk Severity Score", f"{risk_severity}/10", 
+                 delta=None, delta_color="inverse")
+        
+        # Color-coded risk level
+        risk_level = "Low" if risk_severity <= 3 else "Medium" if risk_severity <= 7 else "High"
+        risk_color = "green" if risk_severity <= 3 else "orange" if risk_severity <= 7 else "red"
+        st.markdown(f"<h3 style='text-align: center; color: {risk_color};'>{risk_level} Risk</h3>", 
+                   unsafe_allow_html=True)
+    
+    with col2:
+        st.metric("Flagged Messages", f"{total_flagged}/{total_messages}", 
+                 f"{flag_percentage:.1f}%", delta_color="inverse")
+        
+        # Most active channels in flagged messages
+        if not flagged_df.empty:
+            top_channel = flagged_df['channel'].mode().iloc[0] if not flagged_df['channel'].mode().empty else "N/A"
+            st.markdown(f"**Most Active Risk Channel:**  \n{top_channel}")
+    
+    with col3:
+        # Calculate time to address (in minutes) or time since first flag
+        if not flagged_df.empty:
+            first_flag_time = flagged_df['timestamp'].min()
+            last_message_time = conversation_data['timestamp'].max()
+            
+            minutes_since_first_flag = (last_message_time - first_flag_time).total_seconds() / 60
+            st.metric("Minutes Since First Flag", f"{minutes_since_first_flag:.0f}", 
+                     delta=None)
+            
+            # Key people involved
+            top_flagger = flagged_df['sender'].value_counts().index[0] if not flagged_df['sender'].value_counts().empty else "N/A"
+            st.markdown(f"**Key Person Raising Concerns:**  \n{top_flagger}")
+        else:
+            st.metric("Time Analyzed", f"{time_span:.0f} minutes", delta=None)
+            st.markdown("**No flagged messages detected**")
+    
+    # Create a timeline view of risk evolution
+    if not flagged_df.empty:
+        st.subheader("Risk Evolution Timeline")
+        
+        # Group flagged messages by 5-minute intervals for summary view
+        flagged_df['time_group'] = flagged_df['timestamp'].dt.floor('5min')
+        time_groups = flagged_df.groupby('time_group')
+        
+        # Create simplified timeline of risk evolution
+        timeline_data = []
+        for time, group in time_groups:
+            timeline_data.append({
+                'time': time,
+                'count': len(group),
+                'senders': ', '.join(group['sender'].unique()),
+                'sample_message': group.iloc[0]['message']
+            })
+        
+        timeline_df = pd.DataFrame(timeline_data)
+        
+        # Create column chart for risk evolution
+        if not timeline_df.empty:
+            fig = px.bar(
+                timeline_df, 
+                x='time', 
+                y='count',
+                hover_data=['senders', 'sample_message'],
+                labels={'count': 'Flagged Messages', 'time': 'Time'},
+                color_discrete_sequence=['crimson']
+            )
+            
+            fig.update_layout(
+                title="Risk Flag Timeline",
+                xaxis_title="Time",
+                yaxis_title="Number of Flagged Messages",
+                height=300
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
