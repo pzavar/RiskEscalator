@@ -80,11 +80,11 @@ def identify_themes_in_messages(flagged_messages):
     """
     # Define theme keywords
     themes = {
-        "Thermal Issues": ["thermal", "temperature", "heat", "panel"],
-        "Sensor Problems": ["sensor", "reading", "data", "log"],
-        "Anomalies": ["anomaly", "spike", "deviation", "drift"],
-        "Dismissal": ["not urgent", "minor", "probably nothing", "deemed non-blocking"],
-        "Persistence": ["still", "again", "not convinced", "hope"]
+        "Thermal Issues": ["thermal", "temperature", "heat", "panel", "warm-up"],
+        "Sensor Problems": ["sensor", "reading", "data", "log", "diagnostic"],
+        "Anomalies": ["anomaly", "spike", "deviation", "drift", "fluctuation", "weird"],
+        "Dismissal": ["not urgent", "minor", "probably nothing", "deemed non-blocking", "not a showstopper"],
+        "Persistence": ["still", "again", "not convinced", "hope", "fingers crossed", "ignoring"]
     }
     
     # Count occurrences of each theme
