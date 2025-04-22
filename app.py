@@ -43,23 +43,6 @@ def main():
             if st.button("Analyze Conversation"):
                 with st.spinner("Analyzing conversation for buried risks..."):
                     # Add a small delay to show the spinner
-
-    # JavaScript to automatically scroll to results section once displayed
-    if 'show_results' in st.session_state and st.session_state.show_results:
-        st.markdown("""
-        <script>
-            // Auto-scroll to results section
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(function() {
-                    const resultsSection = document.querySelector('h1, h2, h3, h4').parentNode;
-                    if (resultsSection) {
-                        resultsSection.scrollIntoView({behavior: 'smooth'});
-                    }
-                }, 500);
-            });
-        </script>
-        """, unsafe_allow_html=True)
-
                     time.sleep(1)
                     
                     # Convert timestamp to datetime
@@ -78,23 +61,6 @@ def main():
                         st.info("No potential risks were detected in this conversation.")
                 
                 st.success("Analysis complete!")
-                
-                # Add JavaScript for auto-scrolling to the results section
-                st.markdown("""
-                <script>
-                    // Wait for the page to fully load after rerun
-                    window.addEventListener('load', function() {
-                        // Small delay to ensure elements are rendered
-                        setTimeout(function() {
-                            // Find the results header and scroll to it
-                            const resultsHeader = document.querySelector('h1:contains("Analysis Results"), h2:contains("Analysis Results"), h3:contains("Analysis Results")');
-                            if (resultsHeader) {
-                                resultsHeader.scrollIntoView({behavior: 'smooth'});
-                            }
-                        }, 800);
-                    });
-                </script>
-                """, unsafe_allow_html=True)
                 
                 # Rerun to display results
                 st.rerun()
