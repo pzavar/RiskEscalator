@@ -22,49 +22,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Add custom CSS to apply the background gradient
-st.markdown("""
-<style>
-    .stApp {
-        background: linear-gradient(120deg, #4ecdc4, #56e0e0, #64f38c);
-    }
-    
-    .main {
-        background-color: white;
-        border-radius: 20px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .stButton button {
-        background-color: #2c3e50;
-        color: white;
-    }
-    
-    h1, h2, h3 {
-        color: #2c3e50;
-    }
-    
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        background-color: #f8f9fa;
-        border-radius: 4px 4px 0 0;
-        color: #2c3e50;
-        border: 1px solid #dee2e6;
-        border-bottom: none;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background-color: white;
-        color: #4ecdc4;
-        border-bottom: 2px solid #4ecdc4;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 def main():
     st.title("🔍 Engineering Risk Detection System")
     st.markdown("""
