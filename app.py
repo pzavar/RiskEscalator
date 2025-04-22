@@ -2,6 +2,14 @@ import streamlit as st
 import pandas as pd
 import io
 import time
+import sys
+import os
+
+# Run setup to download required NLTK data
+try:
+    import setup
+except Exception as e:
+    st.error(f"Failed to run setup: {str(e)}")
 
 from risk_detection import analyze_conversation, detect_risks
 from data_visualization import generate_visualizations
