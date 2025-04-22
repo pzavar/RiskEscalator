@@ -48,8 +48,6 @@ def create_timeline_visualization(all_messages, flagged_messages):
         all_messages: DataFrame containing all conversation messages
         flagged_messages: DataFrame containing flagged messages
     """
-    st.subheader("Conversation Timeline with Flagged Messages")
-    
     # Create a copy of the all_messages DataFrame and add a flagged column
     timeline_df = all_messages.copy()
     timeline_df['flagged'] = timeline_df['timestamp'].isin(flagged_messages['timestamp'])
@@ -63,28 +61,52 @@ def create_timeline_visualization(all_messages, flagged_messages):
             if len(flag_reason) > 0:
                 timeline_df.at[idx, 'flag_label'] = f'Flagged: {flag_reason[0]}'
     
-    # Create the timeline visualization
+    # Create a more compact timeline visualization
+    st.markdown('<div class="info-card">', unsafe_allow_html=True)
+    st.markdown('<h3 style="margin-top: 0;">Conversation Timeline</h3>', unsafe_allow_html=True)
+    
+    # Create the timeline visualization with more compact layout
     fig = px.scatter(
         timeline_df,
         x='timestamp',
         y='sender',
         color='flag_label',
         hover_data=['message', 'channel'],
-        size_max=10,
+        size_max=8,  # Smaller dot size
         color_discrete_map={
-            'Normal Message': 'gray',
-            **{col: 'red' for col in timeline_df['flag_label'].unique() if col != 'Normal Message'}
+            'Normal Message': '#cccccc',  # Lighter gray for normal messages
+            **{col: '#d13438' for col in timeline_df['flag_label'].unique() if col != 'Normal Message'}
         }
     )
     
+    # Update layout to be more compact
     fig.update_layout(
-        title="Conversation Timeline",
-        xaxis_title="Time",
-        yaxis_title="Sender",
-        height=400
+        margin=dict(l=5, r=5, t=5, b=5),  # Reduce margins
+        xaxis_title=None,  # Remove axis titles for cleaner look
+        yaxis_title=None,
+        height=250,  # Reduce height
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            font=dict(size=10)
+        ),
+        plot_bgcolor='rgba(0,0,0,0)',  # Transparent background
+        paper_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(
+            showgrid=True,
+            gridcolor='#eeeeee',
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='#eeeeee',
+        )
     )
     
     st.plotly_chart(fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def create_sender_distribution(all_messages, flagged_messages):
     """
@@ -163,11 +185,6 @@ def create_executive_summary(flagged_df, conversation_data):
         flagged_df: DataFrame containing flagged messages
         conversation_data: DataFrame containing all conversation messages
     """
-    st.subheader("Executive Risk Summary")
-    
-    # Create 3 columns for key metrics
-    col1, col2, col3 = st.columns(3)
-    
     # Calculate key metrics
     total_messages = len(conversation_data)
     total_flagged = len(flagged_df)
@@ -201,42 +218,94 @@ def create_executive_summary(flagged_df, conversation_data):
         # Calculate severity based on flagged percentage and dismissal indicator
         risk_severity = min(10, max(1, round((flag_percentage / 10) + dismissal_indicator)))
     
-    # Display metrics with appropriate color coding
-    with col1:
-        st.metric("Risk Severity Score", f"{risk_severity}/10", 
-                 delta=None, delta_color="inverse")
-        
-        # Color-coded risk level
-        risk_level = "Low" if risk_severity <= 3 else "Medium" if risk_severity <= 7 else "High"
-        risk_color = "green" if risk_severity <= 3 else "orange" if risk_severity <= 7 else "red"
-        st.markdown(f"<h3 style='text-align: center; color: {risk_color};'>{risk_level} Risk</h3>", 
-                   unsafe_allow_html=True)
+    # Determine risk level and color
+    risk_level = "Low" if risk_severity <= 3 else "Medium" if risk_severity <= 7 else "High"
+    risk_color = "#107c10" if risk_severity <= 3 else "#ff8c00" if risk_severity <= 7 else "#d13438"
     
-    with col2:
-        st.metric("Flagged Messages", f"{total_flagged}/{total_messages}", 
-                 f"{flag_percentage:.1f}%", delta_color="inverse")
-        
-        # Most active channels in flagged messages
-        if not flagged_df.empty:
-            top_channel = flagged_df['channel'].mode().iloc[0] if not flagged_df['channel'].mode().empty else "N/A"
-            st.markdown(f"**Most Active Risk Channel:**  \n{top_channel}")
+    # Create compact metric cards in a container
+    st.markdown('<div class="info-card">', unsafe_allow_html=True)
     
-    with col3:
-        # Calculate time to address (in minutes) or time since first flag
+    # Compact header row with key risk indicators
+    st.markdown(f"""
+    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+        <h3>Key Risk Indicators</h3>
+        <div style="background-color: {risk_color}22; padding: 0.3rem 0.8rem; border-radius: 4px;">
+            <span style="font-weight: bold; color: {risk_color};">{risk_level} Risk Level</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Create a row of compact metric cards
+    cols = st.columns(4)
+    
+    with cols[0]:
+        st.markdown(f"""
+        <div class="metric-container">
+            <div class="metric-value">{risk_severity}/10</div>
+            <div class="metric-label">Risk Severity</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with cols[1]:
+        st.markdown(f"""
+        <div class="metric-container">
+            <div class="metric-value">{total_flagged}</div>
+            <div class="metric-label">Flagged Messages</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with cols[2]:
+        st.markdown(f"""
+        <div class="metric-container">
+            <div class="metric-value">{flag_percentage:.1f}%</div>
+            <div class="metric-label">Flag Rate</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with cols[3]:
         if not flagged_df.empty:
             first_flag_time = flagged_df['timestamp'].min()
             last_message_time = conversation_data['timestamp'].max()
-            
             minutes_since_first_flag = (last_message_time - first_flag_time).total_seconds() / 60
-            st.metric("Minutes Since First Flag", f"{minutes_since_first_flag:.0f}", 
-                     delta=None)
             
-            # Key people involved
-            top_flagger = flagged_df['sender'].value_counts().index[0] if not flagged_df['sender'].value_counts().empty else "N/A"
-            st.markdown(f"**Key Person Raising Concerns:**  \n{top_flagger}")
+            st.markdown(f"""
+            <div class="metric-container">
+                <div class="metric-value">{minutes_since_first_flag:.0f}</div>
+                <div class="metric-label">Minutes Since Flag</div>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.metric("Time Analyzed", f"{time_span:.0f} minutes", delta=None)
-            st.markdown("**No flagged messages detected**")
+            st.markdown(f"""
+            <div class="metric-container">
+                <div class="metric-value">{time_span:.0f}</div>
+                <div class="metric-label">Minutes Analyzed</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Add key people and channels in a second row if we have flagged messages
+    if not flagged_df.empty:
+        st.markdown("<hr style='margin: 0.8rem 0; border-color: #eee;'>", unsafe_allow_html=True)
+        cols2 = st.columns(2)
+        
+        with cols2[0]:
+            top_flagger = flagged_df['sender'].value_counts().index[0] if not flagged_df['sender'].value_counts().empty else "N/A"
+            st.markdown(f"""
+            <div style="padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
+                <span style="font-weight: bold; font-size: 0.9rem;">Key Person Raising Concerns:</span>
+                <div style="font-size: 1.1rem; margin-top: 0.2rem;">{top_flagger}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with cols2[1]:
+            top_channel = flagged_df['channel'].mode().iloc[0] if not flagged_df['channel'].mode().empty else "N/A"
+            st.markdown(f"""
+            <div style="padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
+                <span style="font-weight: bold; font-size: 0.9rem;">Most Active Risk Channel:</span>
+                <div style="font-size: 1.1rem; margin-top: 0.2rem;">{top_channel}</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Create a timeline view of risk evolution
     if not flagged_df.empty:

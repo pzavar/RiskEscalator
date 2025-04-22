@@ -15,28 +15,74 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for a more professional look
+# Enhanced CSS for a more compact and readable UI
 st.markdown("""
 <style>
+    /* Compact layout */
     .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        max-width: 1000px;
+        margin: 0 auto;
     }
-    h1, h2, h3 {
+    
+    /* Typography improvements */
+    h1 {
+        font-size: 1.8rem;
         font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #0078d4;
     }
+    h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-top: 0.8rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    /* Card-style containers for grouped content */
+    .info-card {
+        background-color: white;
+        border-radius: 5px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #eee;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    /* Tab styling */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 2rem;
+        gap: 1rem;
     }
     .stTabs [data-baseweb="tab"] {
         font-weight: 600;
+        padding: 0.5rem 1rem;
     }
-    .reportview-container .main .block-container {
-        max-width: 1200px;
+    
+    /* Metrics and KPIs */
+    .metric-container {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 0.7rem;
+        text-align: center;
     }
-    .css-1v3fvcr {
-        background-color: #f0f2f6;
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #0078d4;
     }
+    .metric-label {
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    /* Buttons */
     .stButton>button {
         background-color: #0078d4;
         color: white;
@@ -59,27 +105,44 @@ st.markdown("""
     .stDownloadButton>button:hover {
         background-color: #0b5c0b;
     }
+    
+    /* Reduce whitespace in dataframes */
+    .dataframe-container {
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+    }
+    .dataframe {
+        font-size: 0.85rem;
+    }
+    
+    /* Expander modifications */
+    .streamlit-expanderHeader {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    /* Alert/info boxes */
+    .stAlert {
+        padding: 0.5rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 def main():
-    # Professional header with corporate-style design
+    # Compact header with improved visual hierarchy
     st.markdown("""
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h1 style="margin: 0; color: #0078d4;">Engineering Risk Detection System</h1>
-        <p style="margin: 0; color: #666; font-size: 0.9rem;">Powered by AI Analytics</p>
+    <div class="info-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; padding: 0.8rem;">
+        <h1 style="margin: 0;">Engineering Risk Detection System</h1>
+        <p style="margin: 0; color: #666; font-size: 0.8rem;">Powered by AI Analytics</p>
     </div>
-    <hr style="margin-top: 0; margin-bottom: 2rem; border-color: #ddd;">
     """, unsafe_allow_html=True)
     
-    # Executive-friendly introduction
-    st.markdown("""
-    <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 5px; margin-bottom: 2rem;">
-        <h3 style="margin-top: 0;">Executive Summary</h3>
-        <p>This system identifies potentially critical engineering risks that may be buried or downplayed in team communications. 
-        Upload a CSV export of Slack conversations to receive an analysis of overlooked issues that may require leadership attention.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    # More concise introduction
+    with st.expander("About this system", expanded=False):
+        st.markdown("""
+        This system identifies potentially critical engineering risks that may be buried or downplayed in team communications. 
+        Upload a CSV export of Slack conversations to receive an analysis of overlooked issues that may require leadership attention.
+        """)
     
     # File upload section
     uploaded_file = st.file_uploader("Upload your Slack conversation CSV file", type=["csv"])
@@ -154,23 +217,23 @@ def display_results():
         risk_level = "Low" if total_flagged > 0 else "None"
         risk_color = "#107c10" if total_flagged > 0 else "#666666"
     
-    # Executive header with risk assessment
+    # Compact risk assessment card
     st.markdown(f"""
-    <div style="background-color: {risk_color}22; padding: 1.5rem; border-left: 5px solid {risk_color}; 
-    border-radius: 4px; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <div class="info-card" style="background-color: {risk_color}11; border-left: 4px solid {risk_color}; 
+    padding: 0.8rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
         <div>
             <h2 style="margin: 0; color: {risk_color};">Risk Assessment: {risk_level}</h2>
-            <p style="margin: 0.5rem 0 0 0;">Analysis identified {total_flagged} potentially concerning messages that may require leadership attention.</p>
+            <p style="margin: 0.3rem 0 0 0; font-size: 0.9rem;">{total_flagged} potentially concerning messages identified</p>
         </div>
-        <div style="text-align: right;">
-            <h3 style="margin: 0; color: {risk_color};">{flag_percentage:.1f}%</h3>
-            <p style="margin: 0; font-size: 0.9rem;">Flagged Rate</p>
+        <div style="text-align: right; background: {risk_color}22; padding: 0.5rem; border-radius: 4px;">
+            <div style="font-size: 1.5rem; font-weight: bold; color: {risk_color};">{flag_percentage:.1f}%</div>
+            <div style="font-size: 0.7rem;">Flagged Rate</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
     # Create tabs for different sections with executive-friendly labels
-    tab1, tab2, tab3 = st.tabs(["Executive Summary", "Risk Metrics", "Detailed Analysis"])
+    tab1, tab2, tab3 = st.tabs(["Summary", "Risk Details", "Technical Data"])
     
     with tab1:
         # Generate and display visualizations first - these are now more executive-friendly
