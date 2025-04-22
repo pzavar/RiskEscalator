@@ -22,47 +22,12 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for gradient background and white form
-st.markdown("""
-<style>
-    .main {
-        background: linear-gradient(135deg, #36D1DC 0%, #5B86E5 100%);
-    }
-    .css-1lcbmhc, .css-18e3th9, .css-1d391kg {
-        background-color: white;
-        padding: 2rem;
-        border-radius: 1rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .uploadedFile {
-        background-color: white !important;
-    }
-    h1, h2, h3 {
-        color: #2C3E50 !important;
-    }
-    p, li {
-        color: #34495E !important;
-    }
-    .stButton>button {
-        background-color: #2E86C1;
-        color: white;
-    }
-    .stButton>button:hover {
-        background-color: #1A5276;
-        color: white;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 def main():
     st.title("🔍 Engineering Risk Detection System")
     st.markdown("""
     This tool analyzes Slack conversations to identify potential risks that might be buried or downplayed.
     Upload a CSV file of your Slack messages and get an escalation report with visualizations.
     """)
-    
-    # Add some spacing for better layout
-    st.markdown("<br>", unsafe_allow_html=True)
     
     # File upload section
     uploaded_file = st.file_uploader("Upload your Slack conversation CSV file", type=["csv"])

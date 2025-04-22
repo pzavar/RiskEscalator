@@ -3,9 +3,3 @@
 headless = true
 address = "0.0.0.0"
 port = 8501
-[theme]
-primaryColor = "#2E86C1"
-backgroundColor = "#36D1DC"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#262730"
-font = "sans serif"
