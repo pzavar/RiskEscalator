@@ -75,33 +75,13 @@ def main():
 def display_results():
     st.header("📊 Analysis Results")
     
-    # Add a clear instruction to make tabs more noticeable
-    st.markdown("""
-    <div style="background-color: #f0f7ff; padding: 10px; border-radius: 5px; margin-bottom: 15px; border-left: 5px solid #1E88E5;">
-        <h3 style="margin: 0; color: #1E88E5;">Please select a tab below to view different aspects of the analysis:</h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
     # Get data from session state
     flagged_messages = st.session_state.flagged_messages
     conversation_data = st.session_state.conversation_data
     analyzed_conversation = st.session_state.analyzed_conversation
     
-    # Create tabs with icons for better visibility
-    st.markdown("""
-    <style>
-    .big-tabs {
-        font-size: 20px !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Create tabs for different sections with more noticeable styling
-    tab1, tab2, tab3 = st.tabs([
-        "🚨 ESCALATION REPORT", 
-        "📊 VISUALIZATIONS", 
-        "🔍 INSIGHTS"
-    ])
+    # Create tabs for different sections
+    tab1, tab2, tab3 = st.tabs(["Escalation Report", "Visualizations", "Insights"])
     
     with tab1:
         st.subheader("🚨 Escalation Report")

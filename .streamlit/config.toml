@@ -2,33 +2,3 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
-[theme]
-primaryColor = "#FF4B4B"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F0F2F6"
-textColor = "#262730"
-font = "sans serif"
-
-[ui]
-hideTopBar = false
-
-[ui.custom_css]
-tabs = """
-.stTabs [data-baseweb="tab-list"] {
-    gap: 10px;
-}
-.stTabs [data-baseweb="tab"] {
-    height: 50px;
-    white-space: pre-wrap;
-    background-color: #F0F2F6;
-    border-radius: 8px 8px 0px 0px;
-    gap: 1rem;
-    padding: 10px 20px;
-    font-size: 16px;
-}
-.stTabs [aria-selected="true"] {
-    background-color: #FF4B4B !important;
-    color: white !important;
-    font-weight: bold;
-}
-"""
